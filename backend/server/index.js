@@ -4,64 +4,83 @@ const express = require("express");
 
 const token = '6Q84lBuAiLDTocoGHXTG2zq9JCpwE_nN2BtwlWbkBKViyirKaHHsxwUaRJZAIe582vXNuuUqoTF5S65JrOKHKg=='
 const org = 'kasidis.lu@ku.th'
-const bucket = "kasidis.lu's Bucket"
+const bucket = "Smart Home"
 const client = new InfluxDB({url: 'https://us-central1-1.gcp.cloud2.influxdata.com', token: token})
 const PORT = process.env.PORT || 3001;
+const cors = require('cors');
 const app = express();
 
+const queryApi = client.getQueryApi(org);
 app.use(bodyParser.urlencoded());
 app.use(bodyParser.json());
+app.use(cors())
 
-app.get("/api/house", (req, res) => {
-
-    const results = []
-    const queryApi = client.getQueryApi(org)
-    const fluxQuery = `from(bucket:"kasidis.lu's Bucket") |> range(start: 0) |> filter(fn: (r) => r._measurement == "temperature")`
-    queryApi.queryRows(fluxQuery, {
+function fluxResponse(res, fluxQuery){
+  let results=[]
+  queryApi.queryRows(fluxQuery, {
     next(row, tableMeta) {
         const o = tableMeta.toObject(row)
-        // console.log(JSON.stringify(o, null, 2))
-        console.log(
-            `${o._time} ${o._measurement} in '${o.location}' (${o.example}): ${o._field}=${o._value}`
-            )
-        results.push({measurement: o._measurement, location: o.location, [o._field]: o._value})
-
+        results.push({measurement: o._measurement, room: o.room, 'device name': o['device name'], [o._field]: o._value, datetime:o._time})
     },
     error(error) {
-        res.json({status:500, error})
+        res.json({error})
     },
     complete() {
         res.json({status:200, results})
     },
   })
+};
+
+
+app.get("/api/house", (req, res) => {
+  
+    let { roomName, deviceName } = req.query;
+    let fluxQuery=''
+    if( !roomName && !deviceName){
+      fluxQuery = `from(bucket:"${bucket}") |> range(start: 0)`
+    }
+    else if (!roomName){
+      fluxQuery = `from(bucket:"${bucket}") |> range(start: 0) |> filter(fn: (r) => r['device name'] == "${deviceName}")`
+    }
+    else if(!deviceName){
+      fluxQuery = `from(bucket:"${bucket}") |> range(start: 0) |> filter(fn: (r) => r.room == "${roomName}")`
+    }
+    else{
+      fluxQuery = `from(bucket:"${bucket}") |> range(start: 0) |> filter(fn: (r) => r.room == "${roomName}" and r['device name'] == "${deviceName}")`
+    }
+    fluxResponse(res,fluxQuery);
 });
 
-// app.post("/api/room", (req, res) => {
+app.get("/api/house/status", (req, res) => {
+    let results =[]
+    fluxQuery = `from(bucket:"${bucket}") |> range(start: 0) |> group(columns: ["device name"]) |> last()`
+    queryApi.queryRows(fluxQuery, {
+      next(row, tableMeta) {
+          const o = tableMeta.toObject(row)
+          results.push({room: o.room, "device name": o["device name"], status : o.status , datetime:o._time})
+      },
+      error(error) {
+          res.json({error})
+      },
+      complete() {
+          res.json({status:200, results})
+      },
+    })
+    
+});
 
-//     const { roomName, deviceName, volt } = req.body;
-//     const writeApi = client.getWriteApi(org, bucket)
-//     writeApi.useDefaultTags({location: roomName})
-//     const voltagePoint = new Point('voltage')
-//     .tag('Device name', deviceName)
-//     .floatField('Value', volt)
-//     writeApi.writePoint(voltagePoint)
-//     writeApi
-//     .close()
-//     .then(() => {
-//         console.log('WRITE FINISHED')
-//         res.json(voltagePoint)
-//     })
-// })
+app.post("/api/house/add", (req, res) => {
 
-app.post("/api/room/temperature", (req, res) => {
-
-    const { location, celsius } = req.body;
+    var { roomName, deviceName, status, volt} = req.query;
+    if (status.toString() === "off"){
+      volt = 0
+    }
     const writeApi = client.getWriteApi(org, bucket)
-    writeApi.useDefaultTags({location})
-    const point1 = new Point('temperature')
-    .tag('example', 'index.html')
-    .floatField('value', celsius)
-    console.log(` ${point1}`)
+    writeApi.useDefaultTags({room: roomName})
+    const point1 = new Point('energy consumption')
+      .tag('device name', deviceName)
+      .tag('status', status)
+      .floatField('voltage', volt)
     writeApi.writePoint(point1)
     writeApi
       .close()
