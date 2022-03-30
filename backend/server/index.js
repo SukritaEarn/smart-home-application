@@ -59,6 +59,25 @@ app.get("/api/house", (req, res) => {
     fluxResponse(res,fluxQuery);
 });
 
+app.get("/api/history", (req, res) => {
+  
+  let { roomName, deviceName } = req.query;
+  let fluxQuery=''
+  if( !roomName && !deviceName){
+    fluxQuery = `from(bucket:"${bucket}") |> range(start: 0) `
+  }
+  else if (!roomName){
+    fluxQuery = `from(bucket:"${bucket}") |> range(start: 0) |> filter(fn: (r) => r.device == "${deviceName}")`
+  }
+  else if(!deviceName){
+    fluxQuery = `from(bucket:"${bucket}") |> range(start: 0) |> filter(fn: (r) => r.room == "${roomName}")`
+  }
+  else{
+    fluxQuery = `from(bucket:"${bucket}") |> range(start: 0) |> filter(fn: (r) => r.room == "${roomName}" and r['device'] == "${deviceName}")`
+  }
+  fluxResponse(res,fluxQuery);
+});
+
 app.get("/api/house/status", (req, res) => {
 
     fluxQuery = `from(bucket:"${bucket}") |> range(start: 0) |> group(columns: ["device","room"]) |> last()`
