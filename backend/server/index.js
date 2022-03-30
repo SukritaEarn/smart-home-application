@@ -25,7 +25,8 @@ function fluxResponse(res, fluxQuery){
             room: o.room,
             'device name': o['device'], 
             [o._field]: o._value, 
-            datetime: o._time, 
+            datetime: o._time,
+            status: o.status, 
             on_url: o['on_url'], 
             off_url: o['off_url']})
     },
