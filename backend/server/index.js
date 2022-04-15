@@ -6,7 +6,7 @@ const token = '6Q84lBuAiLDTocoGHXTG2zq9JCpwE_nN2BtwlWbkBKViyirKaHHsxwUaRJZAIe582
 const org = 'kasidis.lu@ku.th'
 const bucket = "Smart Home"
 const client = new InfluxDB({url: 'https://us-central1-1.gcp.cloud2.influxdata.com', token: token})
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 const cors = require('cors');
 const app = express();
 
@@ -23,10 +23,11 @@ function fluxResponse(res, fluxQuery){
         results.push({
             measurement: o._measurement,
             room: o.room,
-            'device name': o['device'], 
+            device_name: o['device'], 
             [o._field]: o._value, 
-            datetime: o._time, 
-            on_url: o['on_url'], 
+            datetime: o._time,
+            status: o.status,
+            on_url: o['on_url'],
             off_url: o['off_url']})
     },
     error(error) {
@@ -37,7 +38,6 @@ function fluxResponse(res, fluxQuery){
     },
   })
 };
-
 
 app.get("/api/house", (req, res) => {
   
@@ -56,6 +56,25 @@ app.get("/api/house", (req, res) => {
       fluxQuery = `from(bucket:"${bucket}") |> range(start: 0) |> filter(fn: (r) => r.room == "${roomName}" and r['device'] == "${deviceName}") |> group(columns: ["device","room"]) |> last()`
     }
     fluxResponse(res,fluxQuery);
+});
+
+app.get("/api/history", (req, res) => {
+  
+  let { roomName, deviceName } = req.query;
+  let fluxQuery=''
+  if( !roomName && !deviceName){
+    fluxQuery = `from(bucket:"${bucket}") |> range(start: 0) `
+  }
+  else if (!roomName){
+    fluxQuery = `from(bucket:"${bucket}") |> range(start: 0) |> filter(fn: (r) => r.device == "${deviceName}")`
+  }
+  else if(!deviceName){
+    fluxQuery = `from(bucket:"${bucket}") |> range(start: 0) |> filter(fn: (r) => r.room == "${roomName}")`
+  }
+  else{
+    fluxQuery = `from(bucket:"${bucket}") |> range(start: 0) |> filter(fn: (r) => r.room == "${roomName}" and r['device'] == "${deviceName}")`
+  }
+  fluxResponse(res,fluxQuery);
 });
 
 app.get("/api/house/status", (req, res) => {
@@ -88,8 +107,7 @@ app.get("/api/house/status", (req, res) => {
 });
 
 app.post("/api/house/add", (req, res) => {
-
-    var { roomName, deviceName, status, volt, OnURL, OffURL} = req.query;
+    var { roomName, deviceName, status, volt, OnURL, OffURL} = req.body;
     if (status.toString() === "off"){
       volt = 0
     }

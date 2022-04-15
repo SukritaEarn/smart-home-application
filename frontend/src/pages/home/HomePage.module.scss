@@ -1,0 +1,68 @@
+@import "../../styles/helpers";
+
+i {
+  color: $text-color;
+  cursor: pointer;
+  margin-top: 0.5rem;
+}
+
+.widgetBlock {
+  padding: 12px 0;
+  background-color: $base-light-gray;
+  border-radius: 8px;
+}
+
+.widgetBody {
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+}
+
+.smallWidget {
+  height: auto;
+  width: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 0;
+
+}
+
+.responsiveWidget {
+  @media (max-width: breakpoint-max(lg)) {
+    padding: 24px 12px;
+  }
+}
+
+.buttonOn {
+  min-width: 45px;
+  min-height: 45px;
+  background: $green;
+  border: none;
+  border-radius: 100%;
+  cursor: pointer;
+  outline: none;
+  position: relative;
+}
+
+.buttonOn i {
+  position: relative;
+  color: #fff;
+  font-size: 23px;
+}
+
+.buttonOff {
+  min-width: 45px;
+  min-height: 45px;
+  background: $orange-dark;
+  border: none;
+  border-radius: 100%;
+  cursor: pointer;
+  outline: none;
+  position: relative;
+}
+
+.buttonOff i {
+  position: relative;
+  color: #fff;
+  font-size: 23px;
+}
