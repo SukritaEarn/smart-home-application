@@ -5,7 +5,7 @@ async function execSQL(){
       host: 'localhost',
       user: 'root',
       database: 'test',
-      password : 'pongearnsql',
+      password : '',
   });
   // const sqlQuery = `Create database test`
   // const sqlQuery = `Create TABLE schedule(

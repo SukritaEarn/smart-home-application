@@ -19,7 +19,7 @@ async function selectQuery(){
         host: 'localhost',
         user: 'root',
         database: 'test',
-        password : 'pongearnsql'
+        password : ''
     });
     
     const sqlQuery = 'SELECT * FROM schedule';
@@ -31,11 +31,10 @@ async function selectQuery(){
         rule.minute = data.minutes;
         schedule.scheduleJob(rule, async() => {
             axios.post('http://localhost:3001/api/device/command', data={
-               roomName: data.room, deviceName: data.deviceName, status: data.status, volt: data.volt, url: data.url
+               roomName: data.room, deviceName: data.deviceName, status: data.status
             })
             console.log('updated!');
         })
     });            
 }
-
 selectQuery();

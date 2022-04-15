@@ -2,12 +2,13 @@ const {InfluxDB, Point} = require('@influxdata/influxdb-client')
 var bodyParser  = require('body-parser');
 const mysql = require('mysql2/promise');
 const express = require("express");
-const axios = require('axios')
+const axios = require('axios');
+var SHA256 = require("crypto-js/sha256");
 const token = '6Q84lBuAiLDTocoGHXTG2zq9JCpwE_nN2BtwlWbkBKViyirKaHHsxwUaRJZAIe582vXNuuUqoTF5S65JrOKHKg=='
 const org = 'kasidis.lu@ku.th'
 const bucket = "Devices"
 const client = new InfluxDB({url: 'https://us-central1-1.gcp.cloud2.influxdata.com', token: token})
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 const cors = require('cors');
 const app = express();
 
@@ -44,7 +45,7 @@ async function execSQL(subscriber=null, sqlExec){
   const connection = await mysql.createConnection({
       host: 'localhost',
       user: 'root',
-      password : 'pongearnsql',
+      password : '',
       database: 'test'
   });
   if(!subscriber){
@@ -56,21 +57,6 @@ async function execSQL(subscriber=null, sqlExec){
   console.log('Successfully!');
   return
 };
-
-async function sha256(message) {
-  // encode as UTF-8
-  const msgBuffer = new TextEncoder().encode(message);                    
-
-  // hash the message
-  const hashBuffer = await require('crypto').subtle.digest('SHA-256', msgBuffer);
-
-  // convert ArrayBuffer to Array
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-
-  // convert bytes to hex string                  
-  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  return hashHex;
-}
 
 app.get("/api/house", (req, res) => {
   
@@ -142,10 +128,11 @@ app.get("/api/house/status", (req, res) => {
 app.post("/api/house/add", async (req, res) => {
 
   var { roomName, deviceName, status, volt, url} = req.body;
+  var id = SHA256(roomName+deviceName).toString()
   const writeApi = client.getWriteApi(org, bucket)
   writeApi.useDefaultTags({room: roomName})
   const point1 = new Point('energy consumption')
-    .tag('id', await sha256(roomName+deviceName))
+    .tag('id', id)
     .tag('device', deviceName)
     .tag('url', url)
     .tag('status', status)
@@ -162,15 +149,29 @@ app.post("/api/house/add", async (req, res) => {
 })
 
 app.post("/api/device/command", async (req, res) => {
-  var { url, status, deviceName, roomName, volt} = req.body;
+  var {status, deviceName, roomName} = req.body;
+  var url,volt;
+  var id = SHA256(roomName+deviceName).toString();
   if (status==="off"){
     volt = 0;
   }
   // axios.get(`${url}/cm?cmnd=Power%20${status}`).then((res)=> {console.log(res)})
+  // var id = SHA256(roomName+deviceName)
+  let fluxQuery = `from(bucket:"${bucket}") |> range(start: 0) |> filter(fn: (r) => r.id == "${id}" and r.status == "${status}") |> last()`
+  queryApi.queryRows(fluxQuery,  {
+    next(row, tableMeta) {
+      const o = tableMeta.toObject(row);
+      url = o['url']
+      volt = o['_value']
+    },
+    error(error) {
+      console.log(error)
+    },
+    complete() {
       const writeApi = client.getWriteApi(org, bucket)
       writeApi.useDefaultTags({room: roomName})
       const point1 = new Point('energy consumption')
-        .tag('id', await sha256(roomName+deviceName))
+        .tag('id', id)
         .tag('device', deviceName)
         .tag('url', url)
         .tag('status', status)
@@ -181,26 +182,41 @@ app.post("/api/device/command", async (req, res) => {
         .then(() => {
           console.log('WRITE FINISHED')
           res.json({status:200, success: true, context: `${roomName} ${deviceName} is ${status}`})
+        })
+    }
   })
-
 })
 
 app.post("/api/device/schedule", async (req, res) => {
-  var { hours, minutes, deviceName, roomName, date, status, volt, url } = req.body;
-
-  const schedule = {
-    deviceName: deviceName,
-    room: roomName,
-    hours: hours,
-    minutes: minutes,
-    date: date,
-    status: status,
-    volt: volt,
-    url: url
-  }
-
-  execSQL(schedule,'INSERT INTO schedule SET ?')
-  res.json(schedule)
+  var { hours, minutes, deviceName, roomName, date, status} = req.body;
+  var url,volt;
+  var id = SHA256(roomName+deviceName).toString()
+  let fluxQuery = `from(bucket:"${bucket}") |> range(start: 0) |> filter(fn: (r) => r.id == "${id}" and r.status == "${status}") |> last()`
+  queryApi.queryRows(fluxQuery, {
+    next(row, tableMeta) {
+      const o = tableMeta.toObject(row);
+      url = o['url']
+      volt = o['_value']
+    },
+    error(error) {
+      console.log(error)
+    },
+    complete() {
+      const schedule = {
+        deviceName: deviceName,
+        room: roomName,
+        hours: hours,
+        minutes: minutes,
+        date: date,
+        status: status,
+        volt: volt,
+        url: url
+      }
+    
+      execSQL(schedule,'INSERT INTO schedule SET ?')
+      res.json({status:200, success: true, context: `schedule has been created on ${hours}:${minutes}/${date}`})
+    }
+  })
 })
 
 app.delete("/api/delete/schedule", (req,res) =>{
