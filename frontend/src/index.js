@@ -21,7 +21,7 @@ const store = createStore(
 // -- Rendering Application
 render(
   <Provider store={store}>
-    <SpeechProvider appId="7c4aee08-1073-4a32-b862-ebe1850e0732" language="en-US">
+    <SpeechProvider appId="2695c95a-d005-4da8-814a-18e79390a4d8" language="en-US">
       <App />
     </SpeechProvider>
   </Provider>,

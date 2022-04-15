@@ -2,52 +2,21 @@ import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import { withRouter } from "react-router";
 import { connect } from "react-redux";
-import { SpeechProvider, useSpeechContext } from '@speechly/react-client';
-
-import {
-  Navbar,
-  InputGroupAddon,
-  InputGroup,
-  Input,
-  Form,
-  FormGroup,
-  Button,
-  Spinner,
-} from "reactstrap";
+import { useSpeechContext } from '@speechly/react-client';
+import speechRecognition from "../../speechRecognition";
 
 import s from "./Header.module.scss";
 import "animate.css";
 
+
 const Header = (props) => {
 
   const { speechState, segment, toggleRecording } = useSpeechContext();
-  const [lastSegment, setLastSagment] = useState('');
 
   useEffect(() => {
     if (segment) {
       if (segment.isFinal) {
-        if(segment.intent.intent === 'turn_on'){
-          const devices_on = segment.entities.map(({value})=> value);
-          console.log('on',devices_on)
-        }
-        else if(segment.intent.intent === 'turn_off'){
-          console.log('off',segment)
-        }
-        else if(segment.intent.intent === 'set_timer'){
-          console.log('set_timer',segment)
-          const d = segment.entities.find(({ type }) => type === 'devices' )
-          const t = segment.entities.find(({ type }) => type === 'time' )
-          console.log(d,t)
-        }
-        // for (let [i, v] of segment.words.entries()) {
-        //   if (v.value === 'TURN') {
-        //     if(segment.words[i + 1].value === 'ON'){
-        //       console.log('on', segment)
-        //     }else{
-        //       console.log('off')
-        //     }
-        //   }
-        // }
+        speechRecognition(segment)
       }
     }
   }, [segment]);

@@ -152,9 +152,7 @@ app.post("/api/device/command", async (req, res) => {
   var {status, deviceName, roomName} = req.body;
   var url,volt;
   var id = SHA256(roomName+deviceName).toString();
-  if (status==="off"){
-    volt = 0;
-  }
+
   // axios.get(`${url}/cm?cmnd=Power%20${status}`).then((res)=> {console.log(res)})
   // var id = SHA256(roomName+deviceName)
   let fluxQuery = `from(bucket:"${bucket}") |> range(start: 0) |> filter(fn: (r) => r.id == "${id}" and r.status == "${status}") |> last()`
@@ -168,6 +166,9 @@ app.post("/api/device/command", async (req, res) => {
       console.log(error)
     },
     complete() {
+      if(status==='off'){
+        volt=0
+      }
       const writeApi = client.getWriteApi(org, bucket)
       writeApi.useDefaultTags({room: roomName})
       const point1 = new Point('energy consumption')
@@ -202,6 +203,9 @@ app.post("/api/device/schedule", async (req, res) => {
       console.log(error)
     },
     complete() {
+      if(status==='off'){
+        volt=0
+      }
       const schedule = {
         deviceName: deviceName,
         room: roomName,
@@ -212,7 +216,6 @@ app.post("/api/device/schedule", async (req, res) => {
         volt: volt,
         url: url
       }
-    
       execSQL(schedule,'INSERT INTO schedule SET ?')
       res.json({status:200, success: true, context: `schedule has been created on ${hours}:${minutes}/${date}`})
     }
