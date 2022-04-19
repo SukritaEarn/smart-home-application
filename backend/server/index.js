@@ -58,6 +58,7 @@ async function execSQL(subscriber=null, sqlExec){
   return
 };
 
+
 app.get("/api/house", (req, res) => {
   
     let { roomName, deviceName } = req.body;
@@ -109,7 +110,7 @@ app.get("/api/house/status", (req, res) => {
           const room_=[]
           for(const v of reformattedArray){
               const roomTemp = Object.keys(v)[0]
-              if(room_.includes(roomTemp )){
+              if(room_.includes(roomTemp)){
                   const x = reformattedArray.find(obj => Object.keys(obj)[0]=== roomTemp)
                   const y = Object.assign(x[roomTemp], v[roomTemp])
                   x[roomTemp]=y;
@@ -127,7 +128,7 @@ app.get("/api/house/status", (req, res) => {
 
 app.post("/api/house/add", async (req, res) => {
 
-  var { roomName, deviceName, status, volt, url} = req.body;
+  var { roomName, deviceName, status, watts, url} = req.body;
   var id = SHA256(roomName+deviceName).toString()
   const writeApi = client.getWriteApi(org, bucket)
   writeApi.useDefaultTags({room: roomName})
@@ -136,7 +137,7 @@ app.post("/api/house/add", async (req, res) => {
     .tag('device', deviceName)
     .tag('url', url)
     .tag('status', status)
-    .floatField('voltage', volt)
+    .floatField('watts', watts)
   writeApi.writePoint(point1)
   writeApi
     .close()
@@ -150,7 +151,7 @@ app.post("/api/house/add", async (req, res) => {
 
 app.post("/api/device/command", async (req, res) => {
   var {status, deviceName, roomName} = req.body;
-  var url,volt;
+  var url,watts;
   var id = SHA256(roomName+deviceName).toString();
 
   // axios.get(`${url}/cm?cmnd=Power%20${status}`).then((res)=> {console.log(res)})
@@ -160,14 +161,14 @@ app.post("/api/device/command", async (req, res) => {
     next(row, tableMeta) {
       const o = tableMeta.toObject(row);
       url = o['url']
-      volt = o['_value']
+      watts = o['_value']
     },
     error(error) {
       console.log(error)
     },
     complete() {
       if(status==='off'){
-        volt=0
+        watts=0
       }
       const writeApi = client.getWriteApi(org, bucket)
       writeApi.useDefaultTags({room: roomName})
@@ -176,7 +177,7 @@ app.post("/api/device/command", async (req, res) => {
         .tag('device', deviceName)
         .tag('url', url)
         .tag('status', status)
-        .floatField('voltage', volt)
+        .floatField('watts', watts)
       writeApi.writePoint(point1)
       writeApi
         .close()
@@ -190,21 +191,21 @@ app.post("/api/device/command", async (req, res) => {
 
 app.post("/api/device/schedule", async (req, res) => {
   var { hours, minutes, deviceName, roomName, date, status} = req.body;
-  var url,volt;
+  var url,watts;
   var id = SHA256(roomName+deviceName).toString()
   let fluxQuery = `from(bucket:"${bucket}") |> range(start: 0) |> filter(fn: (r) => r.id == "${id}" and r.status == "${status}") |> last()`
   queryApi.queryRows(fluxQuery, {
     next(row, tableMeta) {
       const o = tableMeta.toObject(row);
       url = o['url']
-      volt = o['_value']
+      watts = o['_value']
     },
     error(error) {
       console.log(error)
     },
     complete() {
       if(status==='off'){
-        volt=0
+        watts=0
       }
       const schedule = {
         deviceName: deviceName,
@@ -213,7 +214,7 @@ app.post("/api/device/schedule", async (req, res) => {
         minutes: minutes,
         date: date,
         status: status,
-        volt: volt,
+        watts: watts,
         url: url
       }
       execSQL(schedule,'INSERT INTO schedule SET ?')
@@ -234,6 +235,53 @@ app.put("/api/update/schedule", (req,res) =>{
   res.json({status:201, success: true, message: `Schedule's ${id} is updated`})
 })
 
+app.get("/api/device/usage", async (req, res) => {
+
+  const onArray = [];
+  const offArray = [];
+  let fluxQuery = `from(bucket:"${bucket}") |> range(start: 0)`
+  queryApi.queryRows(fluxQuery, {
+    next(row, tableMeta) {
+      const o = tableMeta.toObject(row);
+      o.status == 'on' ? onArray.push( o) : offArray.push( o);
+    },
+    error(error) {
+      console.log(error)
+    },
+    complete() {
+      let maxLength;
+      const usageObj = {
+        device: [],
+        status: "stop"
+      }
+      onArray.length > offArray.length ?
+        maxLength = onArray.length : maxLength = offArray.length;
+      for(let i =0 ;i < maxLength; i++){
+        try {
+          const hours = Math.abs(Date.parse(onArray[i]['_time']) - Date.parse(offArray[i]['_time']))/ 36e5;
+          usageObj.device.push(
+            {
+              name: onArray[i]['device'],
+              room: onArray[i]['room'],
+              hours: hours,
+              "watts (hrs)": hours * onArray[i]['_value'],
+              start: onArray[i]['_time'],
+              stop: offArray[i]['_time']
+            }
+          );
+        } catch (error) {
+          usageObj.status = 'running'          
+        }
+      }
+      res.json(usageObj)
+      return 
+    }
+  })
+
+})
+
 app.listen(PORT, () => {
   console.log(`Server listening on ${PORT}`);
 });
+
+
