@@ -49,7 +49,7 @@ const Header = (props) => {
           </div>
         ) : null} </div>
         </div>
-        </div>
+      </div>
     </div>
   )
 }
