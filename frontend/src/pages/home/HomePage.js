@@ -7,11 +7,10 @@ import {
   DropdownToggle,
   DropdownMenu,
   DropdownItem,
-  Dropdown,
+  Dropdown
 } from "reactstrap";
 import Widget from "../../components/Widget/Widget.js";
 import AddDeviceForm from "../../components/AddDevice/AddDevice.js";
-import AddDeviceBtn from "../../components/AddDevice/AddDeviceBtn.js";
 import upgradeImage from "../../assets/dashboard/upgradeImage.svg";
 
 import s from "./HomePage.module.scss";
@@ -20,16 +19,16 @@ const HomePage = () => {
   const [checkboxes, setCheckboxes] = useState([true, false])
   const [tableDropdownOpen, setTableMenuOpen] = useState(false);
   const [deviceList, setDeviceList] = useState([]);
-  const [isShowAddDevice, setIsShowAddDevice] = useState(true);
+  const [isShowAddDevice, setIsShowAddDevice] = useState(false);
 
   useEffect(() => {
-    fetch('http://localhost:3000/api/house')
+    fetch('http://localhost:3001/api/house')
       .then(response => response.json())
       .then(data => setDeviceList(data.results));
   }, []);
 
   const saveSwitchStatus = (item) => {
-    fetch('http://localhost:3000/api/house/add', {
+    fetch('http://localhost:3001/api/house/add', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -39,8 +38,7 @@ const HomePage = () => {
         deviceName: item.device_name, 
         status: item.status,
         volt: 0,
-        OnURL: "",
-        OffURL: "",
+        url: "",
       }),
     })
       .then((res) => {res.json();})
@@ -78,8 +76,15 @@ const HomePage = () => {
     setIsShowAddDevice((isShowAddDevice) => !isShowAddDevice);
   };
 
+  const updateDevice = (deviceInfo) => {
+    setDeviceList([...deviceList, deviceInfo]);
+  };
+
   return (
     <div>
+      <div>
+        <AddDeviceForm isShowAddDevice={isShowAddDevice} handleAddDevice={handleAddDevice} updateDevice={updateDevice}/>
+      </div >
       <Row>
         <Col className="pr-grid-col" xs={12} lg={8}>
           <Row className="gutter mb-4">
@@ -131,11 +136,9 @@ const HomePage = () => {
                 <div className={s.smallWidget}>
                   <div className="d-flex">
                     <div className="d-flex flex-column ml-2">
-                      <div> 
-                        {/* <AddDeviceForm handleAddDevice={handleAddDevice} />
-                        <AddDeviceBtn isShowAddDevice={isShowAddDevice} />      */}
+                      <div>  
+                        <Button color="primary" onClick={handleAddDevice}>Add device</Button>
                       </div>
-                      <span className="body-3 muted">Add device</span>
                     </div>
                   </div>
                 </div>

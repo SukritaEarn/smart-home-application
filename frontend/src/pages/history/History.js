@@ -24,7 +24,7 @@ const Tables = function () {
   const firstTablePagesCount = Math.ceil(historyList.length / pageSize);
 
   useEffect(() => {
-    fetch('http://localhost:3000/api/history')
+    fetch('http://localhost:3001/api/history')
         .then(response => response.json())
         .then(data => setHistoryList(data.results));
   }, []);
