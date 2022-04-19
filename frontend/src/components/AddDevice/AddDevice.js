@@ -78,6 +78,10 @@ const AddDeviceForm = ({ isShowAddDevice, handleAddDevice, updateDevice }) => {
             <div className="mb-1">Url</div>
             <Input name="url" placeholder="IP Address e.g., 192.xxx.x.x" type="url" onChange={handleChange}/>
           </FormGroup>
+          <FormGroup>
+            <div className="mb-1">Watts</div>
+            <Input name="watts" placeholder="Device power consumption" type="number" onChange={handleChange}/>
+          </FormGroup>
         </Form>
       </ModalBody>
       <ModalFooter>
