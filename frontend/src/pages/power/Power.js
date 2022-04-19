@@ -20,11 +20,11 @@ const Charts = () => {
       res.data.result.forEach((ele)=>{
         x.push({
           data:ele.hoursInWeek,
-          name:ele.name
+          name:`${ele.name}:${ele.room}`
         })
         y.push({
           data:ele.wattsInWeek,
-          name:ele.name
+          name:`${ele.name}:${ele.room}`
         })
       })
       setHours(x)

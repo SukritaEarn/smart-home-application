@@ -155,6 +155,7 @@ app.post("/api/device/command", async (req, res) => {
 
   // axios.get(`${url}/cm?cmnd=Power%20${status}`).then((res)=> {console.log(res)})
   let fluxQuery = `from(bucket:"${bucket}") |> range(start: 0) |> filter(fn: (r) => r.id == "${id}" and r.status == "on") |> last()`
+  
   queryApi.queryRows(fluxQuery,  {
     next(row, tableMeta) {
       const o = tableMeta.toObject(row);
@@ -168,6 +169,12 @@ app.post("/api/device/command", async (req, res) => {
       if(status==='off'){
         watts=0
       }
+      if(url===undefined){
+        res.send({status:300, success:false, message: "error: url not found!"})
+        return
+      }
+
+      try{
       const writeApi = client.getWriteApi(org, bucket)
       writeApi.useDefaultTags({room: roomName})
       const point1 = new Point('energy consumption')
@@ -183,8 +190,12 @@ app.post("/api/device/command", async (req, res) => {
           console.log('WRITE FINISHED')
           res.json({status:200, success: true, context: `${roomName} ${deviceName} is ${status}`})
         })
+      }catch(err){
+        res.send({status:300, success:false, message: err})
+      }
     }
   })
+
 })
 
 app.post("/api/device/schedule", async (req, res) => {
@@ -253,15 +264,21 @@ app.get("/api/device/usage", async (req, res) => {
   let onArray = [];
   let offArray = [];
   let nameArray = [];
+  let roomArray = [];
+  let idArray=[];
   let fluxQuery = `from(bucket:"${bucket}") |> range(start: 0) |> sort(columns: ["_time"])`
 
   queryApi.queryRows(fluxQuery, {
     next(row, tableMeta) {
       const o = tableMeta.toObject(row);
       o.status == 'on' ? onArray.push( o) : offArray.push( o);
-      if (!nameArray.includes(o['device'])){
-        nameArray.push(o['device'])
+
+      if(!idArray.includes(o['id'])){
+        idArray.push(o['id']);
+        nameArray.push(o['device']);
+        roomArray.push(o['room']);
       }
+
     },
     error(error) {
       console.log(error)
@@ -270,20 +287,22 @@ app.get("/api/device/usage", async (req, res) => {
       let maxLength;
       const result = []
 
-      for(let name of nameArray){
+      
+      for(let [i,name] of idArray.entries()){
 
         const usageObj = {
-          name: name,
+          name: nameArray[i],
+          room: roomArray[i],
           hours: [],
           watts: [],
           date: [],
           status: "stop"
         }
         const onNameArray = onArray.filter(obj => {
-          return obj.device === name
+          return obj.device === nameArray[i] && obj.room === roomArray[i]
         })
         const offNameArray = offArray.filter(obj => {
-          return obj.device === name
+          return obj.device === nameArray[i] && obj.room === roomArray[i]
         })
 
         onNameArray.length > offNameArray.length ?
