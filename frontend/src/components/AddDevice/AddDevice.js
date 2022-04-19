@@ -35,7 +35,7 @@ const AddDeviceForm = ({ isShowAddDevice, handleAddDevice, updateDevice }) => {
         roomName: item.roomName,
         deviceName: item.deviceName, 
         status: "on",
-        watts: 1,
+        watts: item.watts,
         url: item.url,
       }),
     })

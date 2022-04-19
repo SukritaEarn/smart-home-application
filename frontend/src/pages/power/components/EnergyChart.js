@@ -1,16 +1,7 @@
-import React from "react";
+import React,{useEffect, useState} from "react";
 import ApexCharts from "react-apexcharts";
+import axios from "axios";
 
-const series = [
-  {
-    name: "TV",
-    data: [234, 320, 222, 100, 200, 333, 221],
-  },
-  {
-    name: "Fan",
-    data: [150, 160, 130, 20, 20, 320, 150],
-  },
-];
 
 const chartSettings = {
   dataLabels: {
@@ -72,13 +63,17 @@ const chartSettings = {
   }
 };
 
-export default function ApexLineChart() {
-  return (
-    <ApexCharts
-      options={chartSettings}
-      series={series}
-      type="area"
-      height={300}
-    />
-  );
+
+export default function ApexLineChart(props) {
+
+    return (
+
+      <ApexCharts
+        options={chartSettings}
+        series={props.data}
+        type="area"
+        height={300}
+      />
+    );
+  
 }

@@ -1,5 +1,5 @@
-import React from "react";
-
+import React, {useState,useEffect} from "react";
+import axios from "axios";
 import {
   Col,
   Row,
@@ -9,6 +9,33 @@ import EnergyChart from "./components/EnergyChart";
 import HourChart from "./components/HourChart";
 
 const Charts = () => {
+  const [hours,setHours] = useState("")
+  const [watts,setWatts] = useState("")
+  const [ready,setReady] = useState(false);
+
+  useEffect( ()=>{
+    async function fetchData() {
+      const res = await axios.get('http://localhost:3001/api/device/usage')
+      let x=[],y=[];
+      res.data.result.forEach((ele)=>{
+        x.push({
+          data:ele.hoursInWeek,
+          name:ele.name
+        })
+        y.push({
+          data:ele.wattsInWeek,
+          name:ele.name
+        })
+      })
+      setHours(x)
+      setWatts(y)
+      setReady(true)
+    }
+    fetchData();
+  },[])
+  if(!ready ){
+    return <div>Loading...</div>
+  }
   return (
     <div>
       <Row>
@@ -17,7 +44,7 @@ const Charts = () => {
             <Col>
               <Widget className="widget-p-md">
                 <div className="headline-2 mb-3">Electricity consumption</div>
-                <EnergyChart/>
+                <EnergyChart data={watts}/>
               </Widget>
             </Col>
           </Row>
@@ -27,7 +54,7 @@ const Charts = () => {
             <Col>
               <Widget className="widget-p-md">
                 <div className="headline-2 mb-3">Hours of use</div>
-                <HourChart/>
+                <HourChart data={hours}/>
               </Widget>
             </Col>
           </Row>
