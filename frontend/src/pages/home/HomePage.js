@@ -37,7 +37,7 @@ const HomePage = () => {
         roomName: item.room,
         deviceName: item.device_name, 
         status: item.status,
-        volt: 0,
+        watts: 0,
         url: "",
       }),
     })

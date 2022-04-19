@@ -6,7 +6,7 @@ const axios = require('axios');
 var SHA256 = require("crypto-js/sha256");
 const token = '6Q84lBuAiLDTocoGHXTG2zq9JCpwE_nN2BtwlWbkBKViyirKaHHsxwUaRJZAIe582vXNuuUqoTF5S65JrOKHKg=='
 const org = 'kasidis.lu@ku.th'
-const bucket = "Smart Home"
+const bucket = "Devices"
 const client = new InfluxDB({url: 'https://us-central1-1.gcp.cloud2.influxdata.com', token: token})
 const PORT = process.env.PORT || 3001;
 const cors = require('cors');
