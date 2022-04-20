@@ -47,11 +47,10 @@ const AddDeviceForm = ({ isShowAddDevice, handleAddDevice, updateDevice }) => {
     setNewDevice({ ...newDevice, [e.target.name]: e.target.value});
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
+  const handleSubmit = (e) => {
+    e.preventDefault();
     addNewDevice(newDevice);
     handleAddDevice();
-    console.log(newDevice)
     updateDevice(newDevice)
   }
 
@@ -85,7 +84,7 @@ const AddDeviceForm = ({ isShowAddDevice, handleAddDevice, updateDevice }) => {
         </Form>
       </ModalBody>
       <ModalFooter>
-          <Button color="primary" onClick={handleSubmit}>Add</Button>
+          <Button color="primary" onClick={handleSubmit}>Add device</Button>
       </ModalFooter>
     </Modal>
   );

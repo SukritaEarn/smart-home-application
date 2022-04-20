@@ -4,8 +4,8 @@ async function execSQL(){
   const connection = await mysql.createConnection({
       host: 'localhost',
       user: 'root',
-      database: 'test',
-      password : 'keep1234',
+      database: 'timerDB',
+      password : 'time',
   });
   // const sqlQuery = `Create database test`
   // const sqlQuery = `Create TABLE schedule(
@@ -17,7 +17,8 @@ async function execSQL(){
   //                       date VARCHAR(50),
   //                       status VARCHAR(50),
   //                       volt DECIMAL(19,2),
-  //                       url VARCHAR(200)
+  //                       url VARCHAR(200),
+  //                       toggleStatus VARCHAR(50)
   //                   )`;
   const sqlQuery = 'SELECT * FROM schedule';
   // const sqlQuery = 'Drop table schedule';

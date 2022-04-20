@@ -41,12 +41,12 @@ function fluxResponse(res, fluxQuery){
   })
 };
 
-async function execSQL(subscriber=null, sqlExec){
+async function execSQL( sqlExec,subscriber=null){
   const connection = await mysql.createConnection({
       host: 'localhost',
       user: 'root',
-      password : '',
-      database: 'test'
+      password : 'time',
+      database: 'timerDB'
   });
   if(!subscriber){
     await connection.query(sqlExec)
@@ -189,6 +189,23 @@ app.post("/api/device/command", async (req, res) => {
   })
 })
 
+app.get("/api/all/schedule", async (req,res) =>{
+  
+  const connection = await mysql.createConnection({
+    host: 'localhost',
+    user: 'root',
+    database: 'timerDB',
+    password : 'time',
+  });
+  const sqlQuery = 'SELECT * FROM schedule';
+  let [rows] = await connection.execute(sqlQuery)
+  execSQL(sqlQuery)
+  connection.end()
+  console.log('successfully!');
+
+  res.json({status:200, success: true, message: rows})
+})
+
 app.post("/api/device/schedule", async (req, res) => {
   var { hours, minutes, deviceName, roomName, date, status} = req.body;
   var url,watts;
@@ -204,7 +221,7 @@ app.post("/api/device/schedule", async (req, res) => {
       console.log(error)
     },
     complete() {
-      if(status==='off'){
+      if(status==='off') {
         watts=0
       }
       const schedule = {
@@ -217,7 +234,7 @@ app.post("/api/device/schedule", async (req, res) => {
         watts: watts,
         url: url
       }
-      execSQL(schedule,'INSERT INTO schedule SET ?')
+      execSQL('INSERT INTO schedule SET ?',schedule)
       res.json({status:200, success: true, context: `schedule has been created on ${hours}:${minutes}/${date}`})
     }
   })
@@ -225,13 +242,13 @@ app.post("/api/device/schedule", async (req, res) => {
 
 app.delete("/api/delete/schedule", (req,res) =>{
   var {id} = req.body;
-  execSQL( null ,`DELETE FROM schedule WHERE id = ${id}`)
+  execSQL(`DELETE FROM schedule WHERE id = ${id}`)
   res.json({status:202, success: true, message: `Schedule's ${id} is deleted`})
 })
 
 app.put("/api/update/schedule", (req,res) =>{
   var {id,hours,minutes} = req.body;
-  execSQL( null ,`UPDATE schedule SET hours = ${hours}, minutes = ${minutes} WHERE id = ${id}`)
+  execSQL(`UPDATE schedule SET hours = ${hours}, minutes = ${minutes} WHERE id = ${id}`)
   res.json({status:201, success: true, message: `Schedule's ${id} is updated`})
 })
 

@@ -24,7 +24,27 @@ i {
   display: flex;
   flex-direction: column;
   padding: 20px 0;
+}
 
+.addWidget {
+  margin:auto;
+  height: auto;
+  width: auto;
+  display: inline-block;
+  padding: 0%;
+}
+
+.addIcon i {
+  font-size: 20px;
+  color: #fff;
+  text-align: center;
+  margin-left: 15px
+}
+
+.addButton {
+  font-size: 28px;
+  color: #fff;
+  text-align: center;
 }
 
 .responsiveWidget {
@@ -65,4 +85,42 @@ i {
   position: relative;
   color: #fff;
   font-size: 23px;
+}
+
+.buttonSetting {
+  padding: 0%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  outline: none;
+  position: relative;
+  height: 17px;
+  width: 17px;
+  z-index: 10;
+}
+
+.buttonSetting i {
+  padding: 0%;
+  margin: 0%;
+  position: relative;
+  color: $base-dark-gray;
+  font-size: 17px;
+  z-index: 10;
+}
+
+.buttonSetting i:hover{
+  padding: 0%;
+  margin: 0%;
+  position: relative;
+  color: $default;
+  font-size: 17px;
+  z-index: 10;
+}
+
+.icon {
+  margin-right: 2px;
+  margin-left: 2px;
+  width: 41px;
+  height: 41px;
+  image-rendering: -webkit-optimize-contrast;
 }

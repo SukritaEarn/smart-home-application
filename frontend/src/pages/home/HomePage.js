@@ -11,20 +11,36 @@ import {
 } from "reactstrap";
 import Widget from "../../components/Widget/Widget.js";
 import AddDeviceForm from "../../components/AddDevice/AddDevice.js";
+import SetTimerForm from "../../components/Timer/SetTimer.js";
+import EditTimerForm from "../../components/Timer/EditTimer.js";
 import upgradeImage from "../../assets/dashboard/upgradeImage.svg";
+import sunIcon from "../../assets/sun.png";
+import moonIcon from "../../assets/moon.png";
 
 import s from "./HomePage.module.scss";
 
 const HomePage = () => {
-  const [checkboxes, setCheckboxes] = useState([true, false])
   const [tableDropdownOpen, setTableMenuOpen] = useState(false);
   const [deviceList, setDeviceList] = useState([]);
+  const [timerList, setTimerList] = useState([]);
+  const [deviceOptions, setDeviceOptions] = useState(null);
+  const [timerOptions, setTimerOptions] = useState(null);
+  const [timerEditOptions, setTimerEditOptions] = useState(null);
+  const [timerDelOptions, setTimerDelOptions] = useState(null);
   const [isShowAddDevice, setIsShowAddDevice] = useState(false);
+  const [isShowSetTimer, setIsShowSetTimer] = useState(false);
+  const [isShowEditTimer, setIsShowEditTimer] = useState(false);
 
   useEffect(() => {
     fetch('http://localhost:3001/api/house')
       .then(response => response.json())
       .then(data => setDeviceList(data.results));
+  }, []);
+
+  useEffect(() => {
+    fetch('http://localhost:3001/api/all/schedule')
+      .then(response => response.json())
+      .then(data => setTimerList(data.message));
   }, []);
 
   const saveSwitchStatus = (item) => {
@@ -45,6 +61,27 @@ const HomePage = () => {
       .catch((err) => console.log(err))
   }
 
+  const deleteTimer = (id) => {
+    fetch('http://localhost:3001/api/delete/schedule', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        id: id
+      }),
+    })
+      .then((res) => {res.json();})
+      .catch((err) => console.log(err))
+  }
+
+  const renderIcon = (hours) => {
+    if ( hours > 3 && hours < 17 )
+        return (<img className={s.icon} src={sunIcon} alt="morning" />);
+    else
+        return (<img className={s.icon} src={moonIcon} alt="moon" />);
+  }
+
   const toggleSwitch = (name, room, status) => {
     let updateDeviceList = deviceList.map((item) => {
       if(item.device_name !== name || item.room !== room) {
@@ -63,12 +100,8 @@ const HomePage = () => {
     setDeviceList(updateDeviceList)
   }
 
-  const toggleCheckbox = (id) => {
-    setCheckboxes(checkboxes => checkboxes
-      .map((checkbox, index) => index === id ? !checkbox : checkbox ))
-  }
-
-  const tableMenuOpen = () => {
+  const handleTimerSelect = (e, index) => {
+    setTimerOptions(index)
     setTableMenuOpen(!tableDropdownOpen);
   }
 
@@ -76,8 +109,34 @@ const HomePage = () => {
     setIsShowAddDevice((isShowAddDevice) => !isShowAddDevice);
   };
 
+  const handleDeviceSelect = (e, index) => {
+    setDeviceOptions(index)
+    setIsShowSetTimer((isShowSetTimer) => !isShowSetTimer);
+  };
+
+  const handleSetTimer = () => {
+    setIsShowSetTimer((isShowSetTimer) => !isShowSetTimer);
+  };
+
+  const handleEditTimerSelect = (e, index) => {
+    setTimerEditOptions(index)
+    setIsShowEditTimer((isShowEditTimer) => !isShowEditTimer);
+  };
+
+  const handleEditTimer = () => {
+    setIsShowEditTimer((isShowEditTimer) => !isShowEditTimer);
+  };
+
+  const handleDelTimer = (e, index) => {
+    setTimerDelOptions(index)
+  };
+
   const updateDevice = (deviceInfo) => {
     setDeviceList([...deviceList, deviceInfo]);
+  };
+
+  const updateTimer = (timerInfo) => {
+    setTimerList([...timerList, timerInfo]);
   };
 
   return (
@@ -107,9 +166,11 @@ const HomePage = () => {
             </Col>
           </Row>
           <Row className="gutter">
-            {deviceList.map(item => (
-              <Col xs={6} sm={6} xl={3} className="mb-4">
+            {deviceList.map((item, index) => (
+              <Col xs={7} sm={7} xl={4} className="mb-4">
                 <Widget className="widget-p-sm">
+                  <button className={`${s.buttonSetting} float-right`} onClick={(e) => handleDeviceSelect(e, index)}><i className={'eva eva-settings-2-outline'}/></button>
+                  <SetTimerForm isShowSetTimer={deviceOptions === index ? isShowSetTimer : null} handleSetTimer={handleSetTimer} updateTimer={updateTimer} deviceName={item.device_name} deviceRoom={item.room}/>
                   <div className={s.smallWidget}>
                     <div className="d-flex">
                       {item.status === "off" ? (
@@ -131,61 +192,51 @@ const HomePage = () => {
                 </Widget>
               </Col>
             ))}
-            <Col xs={6} sm={6} xl={3} className="mb-4">
-              <Widget className="widget-p-sm">
-                <div className={s.smallWidget}>
-                  <div className="d-flex">
-                    <div className="d-flex flex-column ml-2">
-                      <div>  
-                        <Button color="primary" onClick={handleAddDevice}>Add device</Button>
-                      </div>
-                    </div>
-                  </div>
+            <Col xs={7} sm={7} xl={4} className="mb-4 d-flex justify-content-center">
+              <div className={s.addWidget}>
+                <div className={`${s.addIcon} d-flex justify-content-between`}>
+                  <Button className={s.addButton} color="primary" onClick={handleAddDevice}>Add device<i className={'eva eva-plus-circle-outline'}/></Button>
                 </div>
-              </Widget>
+              </div>
             </Col>
           </Row>
         </Col>
         <Col className="mt-4 mt-lg-0 pl-grid-col" xs={12} lg={4}>
           <Widget className="widget-p-lg">
             <p className="headline-3">Timer</p>
-            <div className={`mt-3 ${s.widgetBlock}`}>
-              <div className={s.widgetBody}>
-                <div className="checkbox checkbox-primary">
-                  <input
-                    id="checkbox0"
-                    type="checkbox"
-                    className="styled"
-                    checked={checkboxes[0]}
-                    onChange={() => toggleCheckbox(0)}
-                  />
-                  <label htmlFor="checkbox0" />
+            {timerList.map((item, index) => (
+              <div className={`mt-3 ${s.widgetBlock}`}>
+                <div className={s.widgetBody}>
+                  <div className="d-flex">
+                    {renderIcon(item.hours)}
+                  </div>
+                  <div className="d-flex flex-column ml-3">
+                    <p className="body-3 text-capitalize">{item.deviceName} -<span className="body-3"> {item.room}</span></p>
+                    <p className="label mb-0 muted text-uppercase">{item.status} <span className="label muted text-lowercase"> {item.date}</span></p>
+                    <p className="body-2">{item.hours}:{item.minutes}</p>
+                  </div>
+                  <Dropdown
+                    className="d-flex ml-auto p-2 " 
+                    nav
+                    isOpen={timerOptions === index ? tableDropdownOpen : null}
+                    toggle={(e) => handleTimerSelect(e, index)}
+                  >
+                    <DropdownToggle nav>
+                      <i className={'eva eva-more-vertical-outline'}/>
+                    </DropdownToggle>
+                    <DropdownMenu >
+                      <DropdownItem>
+                        <div onClick={(e) => handleEditTimerSelect(e, index)}>Edit</div>
+                        <EditTimerForm isShowEditTimer={timerEditOptions === index ? isShowEditTimer : null} handleEditTimer={handleEditTimer} updateTimer={updateTimer} id={item.id} deviceName={item.deviceName} deviceRoom={item.deviceRoom} hours={item.hours} minutes={item.minutes} date={item.date} status={item.status}/>
+                      </DropdownItem>
+                      <DropdownItem>
+                        <div onClick={(e)=> handleDelTimer(e, index)} onChange={timerDelOptions === index ? deleteTimer(item.id) : null}>Delete</div>
+                      </DropdownItem>
+                    </DropdownMenu>
+                  </Dropdown>
                 </div>
-                <div className="d-flex flex-column ml-3">
-                  <p className="body-1 text-capitalize">Light /<span className="label"> bedroom</span></p>
-                  <p className="label mb-0 muted">ON-OFF</p>
-                  <p className="body-2">09.00 - 12.00</p>
-                </div>
-                <Dropdown 
-                  className="d-flex ml-auto p-2 " 
-                  nav
-                  isOpen={tableDropdownOpen}
-                  toggle={() => tableMenuOpen()}
-                >
-                  <DropdownToggle nav>
-                    <i className={'eva eva-more-vertical-outline'}/>
-                  </DropdownToggle>
-                  <DropdownMenu >
-                    <DropdownItem>
-                      <div>Edit</div>
-                    </DropdownItem>
-                    <DropdownItem>
-                      <div>Delete</div>
-                    </DropdownItem>
-                  </DropdownMenu>
-                </Dropdown>
               </div>
-            </div>
+            ))}
           </Widget>
         </Col>
       </Row>
