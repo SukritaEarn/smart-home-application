@@ -44,7 +44,7 @@ const HomePage = () => {
   }, []);
 
   const saveSwitchStatus = (item) => {
-    fetch('http://localhost:3001/api/house/add', {
+    fetch('http://localhost:3001/api/device/command', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -52,9 +52,7 @@ const HomePage = () => {
       body: JSON.stringify({
         roomName: item.room,
         deviceName: item.device_name, 
-        status: item.status,
-        watts: 0,
-        url: "",
+        status: item.status
       }),
     })
       .then((res) => {res.json();})

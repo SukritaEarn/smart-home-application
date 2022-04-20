@@ -1,13 +1,6 @@
-import React from "react";
+import React,{useState,useEffect} from "react";
 import ApexCharts from "react-apexcharts";
-
-const series = [{
-  name: 'TV',
-  data: [2, 2, 3, 1, 1, 5, 4]
-}, {
-  name: 'Fan',
-  data: [5, 4, 3, 2, 3, 8, 5]
-}];
+import axios from "axios";
 
 const chartSettings = {
   colors: ["#FFCA41", "#43BC13"],
@@ -72,11 +65,12 @@ const chartSettings = {
 };
 
 
-export default function ApexColumnAreaChart() {
+export default function ApexColumnAreaChart(props) {
+
   return (
     <ApexCharts
       options={chartSettings}
-      series={series}
+      series={props.data}
       type="bar"
       height={300}
     />

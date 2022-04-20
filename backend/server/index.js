@@ -11,7 +11,6 @@ const client = new InfluxDB({url: 'https://us-central1-1.gcp.cloud2.influxdata.c
 const PORT = process.env.PORT || 3001;
 const cors = require('cors');
 const app = express();
-
 const queryApi = client.getQueryApi(org);
 app.use(bodyParser.urlencoded());
 app.use(bodyParser.json());
@@ -155,8 +154,8 @@ app.post("/api/device/command", async (req, res) => {
   var id = SHA256(roomName+deviceName).toString();
 
   // axios.get(`${url}/cm?cmnd=Power%20${status}`).then((res)=> {console.log(res)})
-  // var id = SHA256(roomName+deviceName)
-  let fluxQuery = `from(bucket:"${bucket}") |> range(start: 0) |> filter(fn: (r) => r.id == "${id}" and r.status == "${status}") |> last()`
+  let fluxQuery = `from(bucket:"${bucket}") |> range(start: 0) |> filter(fn: (r) => r.id == "${id}" and r.status == "on") |> last()`
+  
   queryApi.queryRows(fluxQuery,  {
     next(row, tableMeta) {
       const o = tableMeta.toObject(row);
@@ -170,6 +169,12 @@ app.post("/api/device/command", async (req, res) => {
       if(status==='off'){
         watts=0
       }
+      if(url===undefined){
+        res.send({status:300, success:false, message: "error: url not found!"})
+        return
+      }
+
+      try{
       const writeApi = client.getWriteApi(org, bucket)
       writeApi.useDefaultTags({room: roomName})
       const point1 = new Point('energy consumption')
@@ -185,8 +190,12 @@ app.post("/api/device/command", async (req, res) => {
           console.log('WRITE FINISHED')
           res.json({status:200, success: true, context: `${roomName} ${deviceName} is ${status}`})
         })
+      }catch(err){
+        res.send({status:300, success:false, message: err})
+      }
     }
   })
+
 })
 
 app.get("/api/all/schedule", async (req,res) =>{
@@ -252,45 +261,117 @@ app.put("/api/update/schedule", (req,res) =>{
   res.json({status:201, success: true, message: `Schedule's ${id} is updated`})
 })
 
+app.get("/api/all/schedule", async (req,res) =>{
+  const connection = await mysql.createConnection({
+    host: 'localhost',
+    user: 'root',
+    database: 'test',
+    password : '',
+  });
+  const sqlQuery = 'SELECT * FROM schedule';
+  let [rows] = await connection.execute(sqlQuery)
+  connection.end()
+  console.log('successfully!');
+
+  res.json({status:200, success: true, message: rows})
+})
+
 app.get("/api/device/usage", async (req, res) => {
 
-  const onArray = [];
-  const offArray = [];
-  let fluxQuery = `from(bucket:"${bucket}") |> range(start: 0)`
+  let onArray = [];
+  let offArray = [];
+  let nameArray = [];
+  let roomArray = [];
+  let idArray=[];
+  let fluxQuery = `from(bucket:"${bucket}") |> range(start: 0) |> sort(columns: ["_time"])`
+
   queryApi.queryRows(fluxQuery, {
     next(row, tableMeta) {
       const o = tableMeta.toObject(row);
       o.status == 'on' ? onArray.push( o) : offArray.push( o);
+
+      if(!idArray.includes(o['id'])){
+        idArray.push(o['id']);
+        nameArray.push(o['device']);
+        roomArray.push(o['room']);
+      }
+
     },
     error(error) {
       console.log(error)
     },
     complete() {
       let maxLength;
-      const usageObj = {
-        device: [],
-        status: "stop"
-      }
-      onArray.length > offArray.length ?
-        maxLength = onArray.length : maxLength = offArray.length;
-      for(let i =0 ;i < maxLength; i++){
-        try {
-          const hours = Math.abs(Date.parse(onArray[i]['_time']) - Date.parse(offArray[i]['_time']))/ 36e5;
-          usageObj.device.push(
-            {
-              name: onArray[i]['device'],
-              room: onArray[i]['room'],
-              hours: hours,
-              "watts (hrs)": hours * onArray[i]['_value'],
-              start: onArray[i]['_time'],
-              stop: offArray[i]['_time']
-            }
-          );
-        } catch (error) {
-          usageObj.status = 'running'          
+      const result = []
+
+      
+      for(let [i,name] of idArray.entries()){
+
+        const usageObj = {
+          name: nameArray[i],
+          room: roomArray[i],
+          hours: [],
+          watts: [],
+          date: [],
+          status: "stop"
         }
+        const onNameArray = onArray.filter(obj => {
+          return obj.device === nameArray[i] && obj.room === roomArray[i]
+        })
+        const offNameArray = offArray.filter(obj => {
+          return obj.device === nameArray[i] && obj.room === roomArray[i]
+        })
+
+        onNameArray.length > offNameArray.length ?
+        maxLength = onNameArray.length : maxLength = offNameArray.length;
+
+        for(let i =0 ;i < maxLength; i++){
+
+          try {
+            let hours,watts;
+            hours = Math.abs(Date.parse(onNameArray[i]['_time']) - Date.parse(offNameArray[i]['_time']))/ 36e5;
+            watts = hours*220*onNameArray[i]['_value']
+            usageObj.hours.push(hours);
+            usageObj.watts.push(watts);
+            usageObj.date.push(new Date(onNameArray[i]['_time']).getDay());
+
+            
+          } catch (error) {
+            let hours,watts;
+            hours = Math.abs(Date.parse(onNameArray[i]['_time']) - Date.now())/ 36e5;
+            watts = hours*220*onNameArray[i]['_value']
+            usageObj.hours.push(hours);
+            usageObj.watts.push(watts);
+            usageObj.date.push(new Date(Date.now()).getDay());
+            usageObj.status = 'running'          
+            }
+          }
+          result.push(usageObj);
       }
-      res.json(usageObj)
+      result.forEach(element => {
+        let hoursInWeek = [0,0,0,0,0,0,0];
+        let wattsInWeek = [0,0,0,0,0,0,0];
+
+        for (let i = 0; i<element.date.length-1; i++){
+          if(element.date[i] === element.date[i+1]){
+            element.hours[i+1]+=element.hours[i];
+            element.watts[i+1]+=element.watts[i];
+          }
+          hoursInWeek[element.date[i+1]-1] = element.hours[i+1];
+          wattsInWeek[element.date[i+1]-1] = element.watts[i+1];
+        }
+        if(element.date.length-1<=0){
+          hoursInWeek[element.date-1] = element.hours[0]
+          wattsInWeek[element.date-1] = element.watts[0];
+        }
+        delete element.hours
+        delete element.watts
+        delete element.date
+        element.hoursInWeek = hoursInWeek;
+        element.wattsInWeek = wattsInWeek;
+      })
+
+      res.json({result})
       return 
     }
   })
