@@ -5,7 +5,7 @@ In this project, we propose a new system architecture IoT based smart home that 
 ## Team members
 
 | Name | ID | Github ID |
-|-----|-------|
+|-----|-------|------|
 | Sukrita Kittipitayakorn | 6110546062 | [SukritaEarn](https://github.com/SukritaEarn) |
 | Kasidis Luangwutiwong | 6110546364 | [KasidisGit](https://github.com/KasidisGit) |
 
