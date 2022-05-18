@@ -22,17 +22,17 @@ const Header = (props) => {
   }, [segment]);
 
   let isMicReady;
-  if (speechState != 'Recording') {
-    isMicReady = false;
-  } else {
+  if (speechState == 'Idle') {
     isMicReady = true;
+  } else {
+    isMicReady = false;
   };
 
   return (
     <div className="d-flex flex-row">
       <div className={s.header}>
         <div>
-          {isMicReady ? (
+          {!isMicReady ? (
             <button className={s.button} onClick={toggleRecording}><i class="fa fa-microphone" aria-hidden="true"></i></button>
           ) : 
           <button className={s.buttonPrepare} onClick={toggleRecording}><i class="fa fa-microphone" aria-hidden="true"></i></button> }
@@ -40,9 +40,9 @@ const Header = (props) => {
       <div>
       <div className={s.speechWrap} >
         {isMicReady ? (
-          null
+          <div className="status">Click to speak</div>
         ) : 
-          <div className="status">Click to speak</div>}
+         null}
         {segment ? (
           <div className="segment">
             {segment.words.map((w) => w.value).join(' ')}

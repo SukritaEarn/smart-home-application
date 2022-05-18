@@ -31,7 +31,7 @@ const chartSettings = {
   },
   yaxis: {
     title: {
-      text: 'kilowatt-hour',
+      text: 'watt-hour',
       colors: ["#6B859E"],
     }
   },
@@ -57,7 +57,7 @@ const chartSettings = {
   tooltip: {
     y: {
       formatter: function (val) {
-        return val + " kWh"
+        return val + " Wh"
       }
     }
   }

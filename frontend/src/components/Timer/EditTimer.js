@@ -13,7 +13,7 @@ import {
   Row
 } from "reactstrap";
 
-const EditTimerForm = ({ isShowEditTimer, handleEditTimer, updateTimer, deviceName, deviceRoom, time, date, status }) => {
+const EditTimerForm = ({ isShowEditTimer, handleEditTimer, updateTimer, id, deviceName, deviceRoom, hours, minutes, date, status }) => {
 
   const [changeTimer, setChangeTimer] = useState({});
   const [timerList, setTimerList] = useState([]);
@@ -26,7 +26,7 @@ const EditTimerForm = ({ isShowEditTimer, handleEditTimer, updateTimer, deviceNa
       console.log(timerList)
   }, []);
 
-  const editTimer = (item, id) => {
+  const editTimer = (item) => {
     fetch('http://localhost:3001/api/update/schedule', {
       method: 'PUT',
       headers: {
@@ -71,8 +71,7 @@ const EditTimerForm = ({ isShowEditTimer, handleEditTimer, updateTimer, deviceNa
     e.preventDefault();
     editTimer(changeTimer);
     handleEditTimer();
-    console.log(changeTimer)
-    updateTimer(changeTimer)
+    updateTimer(changeTimer);
   }
 
   return (
@@ -83,11 +82,11 @@ const EditTimerForm = ({ isShowEditTimer, handleEditTimer, updateTimer, deviceNa
           <Row>
             <Col md={6}>
               <FormGroup className="mb-3 ml-auto">
-                <div className="mb-1">Change time - {time}</div>
+                <div className="mb-1">Change time - {hours}:{minutes}</div>
                 <Input name="time" placeholder="time placeholder" type="time" onChange={handleChange}/>
               </FormGroup>
             </Col>
-            <Col md={6}>
+            {/* <Col md={6}>
               <FormGroup className="mb-3 ml-auto">
                 <div className="mb-1">Change status - {status}</div>
                 <Input name="status" type="select" onChange={handleChangeOpts}>
@@ -99,41 +98,12 @@ const EditTimerForm = ({ isShowEditTimer, handleEditTimer, updateTimer, deviceNa
                   </option>
                 </Input>
               </FormGroup>
-            </Col>
+            </Col> */}
           </Row>
-          <FormGroup>
-            <div className="mb-1">Change date - {date}</div>
-            <Input multiple name="date" type="select" onChange={handleChangeOpts}>
-              <option value={"everyday"}>
-                Everyday
-              </option>
-              <option value={"sunday"}>
-                Sunday
-              </option>
-              <option value={"monday"}>
-                Monday
-              </option>
-              <option value={"tuesday"}>
-                Tuesday
-              </option>
-              <option value={"wednesday"}>
-                Wednesday
-              </option>
-              <option value={"thursday"}>
-                Thursday
-              </option>
-              <option value={"friday"}>
-                Friday
-              </option>
-              <option value={"saturday"}>
-                Saturday
-              </option>
-            </Input>
-          </FormGroup>
         </Form>
       </ModalBody>
       <ModalFooter>
-          <Button color="primary" onClick={handleSubmit}>Add timer</Button>
+          <Button color="primary" onClick={handleSubmit}>Edit timer</Button>
       </ModalFooter>
     </Modal>
   );

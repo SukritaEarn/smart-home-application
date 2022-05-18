@@ -7,7 +7,7 @@ async function execSQL(){
       database: 'timerDB',
       password : 'time',
   });
-  // const sqlQuery = `Create database test`
+  // const sqlQuery = `Create database timerDB`
   // const sqlQuery = `Create TABLE schedule(
   //                       id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   //                       deviceName VARCHAR(30) NOT NULL,
@@ -16,7 +16,7 @@ async function execSQL(){
   //                       minutes INT,
   //                       date VARCHAR(50),
   //                       status VARCHAR(50),
-  //                       volt DECIMAL(19,2),
+  //                       watts DECIMAL(19,2),
   //                       url VARCHAR(200),
   //                       toggleStatus VARCHAR(50)
   //                   )`;

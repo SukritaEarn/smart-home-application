@@ -70,7 +70,7 @@ const Breadcrumbs = (props) => {
         </Breadcrumb>
         }
       </div>
-      <div className="d-inline-flex ml-auto p-2">
+      {/* <div className="d-inline-flex ml-auto p-2">
           <div className={s.icon}><DashboardOutlinedIcon /></div>
           <UncontrolledDropdown>
             <DropdownToggle caret>
@@ -81,7 +81,7 @@ const Breadcrumbs = (props) => {
               <DropdownItem>Garden</DropdownItem>
             </DropdownMenu>
           </UncontrolledDropdown>
-      </div>
+      </div> */}
     </div>
   )
 };

@@ -153,7 +153,6 @@ app.post("/api/device/command", async (req, res) => {
   var url,watts;
   var id = SHA256(roomName+deviceName).toString();
 
-  // axios.get(`${url}/cm?cmnd=Power%20${status}`).then((res)=> {console.log(res)})
   let fluxQuery = `from(bucket:"${bucket}") |> range(start: 0) |> filter(fn: (r) => r.id == "${id}" and r.status == "on") |> last()`
   
   queryApi.queryRows(fluxQuery,  {
@@ -173,7 +172,12 @@ app.post("/api/device/command", async (req, res) => {
         res.send({status:300, success:false, message: "error: url not found!"})
         return
       }
-
+      try{
+        axios.get(`${url}/cm?cmnd=Power%20${status}`)
+      }
+      catch(err){
+        console.log('this is a demo url')
+      }
       try{
       const writeApi = client.getWriteApi(org, bucket)
       writeApi.useDefaultTags({room: roomName})
@@ -217,6 +221,7 @@ app.get("/api/all/schedule", async (req,res) =>{
 
 app.post("/api/device/schedule", async (req, res) => {
   var { hours, minutes, deviceName, roomName, date, status} = req.body;
+  console.log(req.body)
   var url,watts;
   var id = SHA256(roomName+deviceName).toString()
   let fluxQuery = `from(bucket:"${bucket}") |> range(start: 0) |> filter(fn: (r) => r.id == "${id}" and r.status == "${status}") |> last()`
@@ -225,6 +230,7 @@ app.post("/api/device/schedule", async (req, res) => {
       const o = tableMeta.toObject(row);
       url = o['url']
       watts = o['_value']
+      console.log(watts)
     },
     error(error) {
       console.log(error)
@@ -259,21 +265,6 @@ app.put("/api/update/schedule", (req,res) =>{
   var {id,hours,minutes} = req.body;
   execSQL(`UPDATE schedule SET hours = ${hours}, minutes = ${minutes} WHERE id = ${id}`)
   res.json({status:201, success: true, message: `Schedule's ${id} is updated`})
-})
-
-app.get("/api/all/schedule", async (req,res) =>{
-  const connection = await mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    database: 'test',
-    password : '',
-  });
-  const sqlQuery = 'SELECT * FROM schedule';
-  let [rows] = await connection.execute(sqlQuery)
-  connection.end()
-  console.log('successfully!');
-
-  res.json({status:200, success: true, message: rows})
 })
 
 app.get("/api/device/usage", async (req, res) => {

@@ -13,15 +13,7 @@ import {
   Row
 } from "reactstrap";
 
-const AddDeviceForm = ({ isShowAddDevice, handleAddDevice, updateDevice }) => {
-
-  const initialDeviceData = Object.freeze({
-    deviceName: "",
-    roomName: "",
-    status: "on",
-    watts: 1,
-    url: "",
-  });
+const AddDeviceForm = ({ isShowAddDevice, handleAddDevice, updateDevice, useEffect }) => {
 
   const [newDevice, setNewDevice] = useState({});
 
@@ -51,7 +43,7 @@ const AddDeviceForm = ({ isShowAddDevice, handleAddDevice, updateDevice }) => {
     e.preventDefault();
     addNewDevice(newDevice);
     handleAddDevice();
-    updateDevice(newDevice)
+    updateDevice(newDevice);
   }
 
   return (

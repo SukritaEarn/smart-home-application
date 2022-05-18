@@ -19,7 +19,7 @@ import moonIcon from "../../assets/moon.png";
 
 import s from "./HomePage.module.scss";
 
-const HomePage = () => {
+const HomePage = ()  => {
   const [tableDropdownOpen, setTableMenuOpen] = useState(false);
   const [deviceList, setDeviceList] = useState([]);
   const [timerList, setTimerList] = useState([]);
@@ -80,6 +80,21 @@ const HomePage = () => {
         return (<img className={s.icon} src={moonIcon} alt="moon" />);
   }
 
+  const renderHourString = (hour) => {
+    if (hour < 10) {
+      return hour = `0${hour.toString()}`
+    }
+    return hour.toString()
+  }
+
+  const renderMinuteString = (min) => {
+    if (min < 10) {
+      return min = `0${min.toString()}`
+    }
+    return min.toString()
+  }
+  
+
   const toggleSwitch = (name, room, status) => {
     let updateDeviceList = deviceList.map((item) => {
       if(item.device_name !== name || item.room !== room) {
@@ -129,6 +144,18 @@ const HomePage = () => {
     setTimerDelOptions(index)
   };
 
+  // const useUpdateDeviceListEffect = () => useEffect(() => {
+  //   fetch('http://localhost:3001/api/house')
+  //     .then(response => response.json())
+  //     .then(data => setDeviceList(data.results));
+  // }, [deviceList]);
+
+  // const useUpdateTimerListEffect = () => useEffect(() => {
+  //   fetch('http://localhost:3001/api/all/schedule')
+  //     .then(response => response.json())
+  //     .then(data => setTimerList(data.message));
+  // }, [timerList]);
+
   const updateDevice = (deviceInfo) => {
     setDeviceList([...deviceList, deviceInfo]);
   };
@@ -144,10 +171,10 @@ const HomePage = () => {
       </div >
       <Row>
         <Col className="pr-grid-col" xs={12} lg={8}>
-          <Row className="gutter mb-4">
+          {/* <Row className="gutter mb-4">
             <Col xs={12}>
-              <Widget className="widget-p-none">
-                <div className="d-flex flex-wrap align-items-center justify-content-center">
+              <Widget className="widget-p-none"> */}
+                {/* <div className="d-flex flex-wrap align-items-center justify-content-center">
                   <div className="d-flex flex-column align-items-center col-12 col-xl-6 p-sm-4">
                     <p className="headline-1">Upgrade your plan</p>
                     <p className="body-3">So how did the classical Latin become so </p>
@@ -159,10 +186,10 @@ const HomePage = () => {
                   <div className="d-flex justify-content-center col-12 col-xl-6">
                     <img className="p-1 img-fluid" src={upgradeImage} alt="..." />
                   </div>
-                </div>
-              </Widget>
+                </div> */}
+              {/* </Widget>
             </Col>
-          </Row>
+          </Row> */}
           <Row className="gutter">
             {deviceList.map((item, index) => (
               <Col xs={7} sm={7} xl={4} className="mb-4">
@@ -170,7 +197,7 @@ const HomePage = () => {
                   <button className={`${s.buttonSetting} float-right`} onClick={(e) => handleDeviceSelect(e, index)}><i className={'eva eva-settings-2-outline'}/></button>
                   <SetTimerForm isShowSetTimer={deviceOptions === index ? isShowSetTimer : null} handleSetTimer={handleSetTimer} updateTimer={updateTimer} deviceName={item.device_name} deviceRoom={item.room}/>
                   <div className={s.smallWidget}>
-                    <div className="d-flex">
+                    <div className="d-flex ml-2">
                       {item.status === "off" ? (
                         <div>
                           <button className={s.buttonOff} onClick={() => {toggleSwitch(item.device_name, item.room, item.status);}}><i class="eva eva-power-outline" aria-hidden="true"></i></button>
@@ -180,7 +207,7 @@ const HomePage = () => {
                         <button className={s.buttonOn} onClick={() => {toggleSwitch(item.device_name, item.room, item.status);}}><i class="eva eva-power-outline" aria-hidden="true"></i></button> 
                       </div>
                       )}
-                      <div className="d-flex flex-column ml-2">
+                      <div className="d-flex flex-column ml-3">
                         <p className="headline-3 text-capitalize">{item.device_name}</p>
                         <span className="body-3 muted">{item.room}</span>
                         <p className="label">STATUS: <span className="font-weight-bold text-uppercase">{item.status}</span></p>
@@ -193,7 +220,7 @@ const HomePage = () => {
             <Col xs={7} sm={7} xl={4} className="mb-4 d-flex justify-content-center">
               <div className={s.addWidget}>
                 <div className={`${s.addIcon} d-flex justify-content-between`}>
-                  <Button className={s.addButton} color="primary" onClick={handleAddDevice}>Add device<i className={'eva eva-plus-circle-outline'}/></Button>
+                  <Button color="primary" onClick={handleAddDevice}><div className={s.addButton}>Add device<i className={'eva eva-plus-circle-outline'}/></div></Button>
                 </div>
               </div>
             </Col>
@@ -211,7 +238,8 @@ const HomePage = () => {
                   <div className="d-flex flex-column ml-3">
                     <p className="body-3 text-capitalize">{item.deviceName} -<span className="body-3"> {item.room}</span></p>
                     <p className="label mb-0 muted text-uppercase">{item.status} <span className="label muted text-lowercase"> {item.date}</span></p>
-                    <p className="body-2">{item.hours}:{item.minutes}</p>
+                    <p className="body-2">{renderHourString(item.hours)}:{renderMinuteString(item.minutes)}</p>
+                    
                   </div>
                   <Dropdown
                     className="d-flex ml-auto p-2 " 

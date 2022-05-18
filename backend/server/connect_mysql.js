@@ -18,8 +18,8 @@ async function selectQuery(){
     const connection = await mysql.createConnection({
         host: 'localhost',
         user: 'root',
-        database: 'test',
-        password : ''
+        database: 'timerDB',
+        password : 'time'
     });
     
     const sqlQuery = 'SELECT * FROM schedule';
@@ -33,7 +33,8 @@ async function selectQuery(){
             axios.post('http://localhost:3001/api/device/command', data={
                roomName: data.room, deviceName: data.deviceName, status: data.status
             })
-            console.log('updated!');
+
+            console.log('updated!',data);
         })
     });            
 }
